@@ -21,12 +21,18 @@ initialize_theta(6, 3, [4, 4]) would create a list of Theta terms with dimension
 ### For python_nn_class... ###
 
 At the Terminal:
+
 iPython --pylab
 
+
 At the iPython prompt:
+
 from python_nn_class import nn_py
+
 nn = nn_py()
+
 nn.XOR_test([2], 2500)
+
 
 The iPython console should then show the training data (all 4 records), an explanation of the architecture, Theta shapes and values, the cost of the last iteration of the back prop function, and a new set of input data with predicted outputs.
 
@@ -36,10 +42,13 @@ Additionally, a basic plot of the results of the cost function should also appea
 ### For python_nn_function... ###
 
 At the Terminal:
+
 iPython --pylab
 
 At the iPython prompt:
+
 %run python_nn_function.py
+
 plot(J_list)
 
 
@@ -52,12 +61,15 @@ From there, go in and mess with the code.
 
 ### Requirements ###
 Python 2.7 (may work elsewhere but probably not 3.x)
+
 Numpy
+
 Matplotlib is recommended but not required
 
 ## Author ##
 
  - Nathan Wenzel, Edge Solutions, Inc. [http://www.edgesolutions.com/](http://www.edgesolutions.com/)
+
 [@nwenzel](http://twitter.com/nwenzel)
 
 ## License ##
