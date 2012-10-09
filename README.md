@@ -6,6 +6,8 @@ The code works with any number of hidden layers and any number of units in each 
 
 The code requires Numpy (import numpy as np). Matplotlib would be helpful to graph error to check learning process.
 
+## Important Note ##
+Neural networks that use back propagation will sometimes fail due to the back prop algorithm landing in a local minimum. From time to time, the algorithm will not return the correct answer and the Cost function will end significantly higher than a correctly trained algorithm.
 
 ## Give it a try ##
 It's pretty easy to get in and mess with the code. It's all contained in a single file to make it easy to try out.
