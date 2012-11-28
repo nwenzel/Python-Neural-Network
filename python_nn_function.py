@@ -233,7 +233,7 @@ def fit(X_train, Y_train, Theta_L=[], lmda=0, epochs=2):
 
   print 'i:',i,'  - J:',J_list[i]
     
-  return J_list
+  return Theta_L, J_list
 
 
 
@@ -267,7 +267,7 @@ def XOR_test(hidden_unit_length_list = [], epochs=2500):
   Theta_L = initialize_theta(X_train.shape[1], Y_train.shape[1], hidden_unit_length_list)
   
   # Fit
-  J_list = fit(X_train, Y_train, Theta_L, 1e-5, epochs)
+  Theta_L, J_list = fit(X_train, Y_train, Theta_L, 1e-5, epochs)
   
   # Predict
   X_new = np.array([[1,0],[0,1],[1,1],[0,0]])
