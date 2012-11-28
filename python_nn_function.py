@@ -147,43 +147,40 @@ def back_prop(X_train, Y_train, Theta_L, lmda):
   """
 
   n_observations = len(X_train)
-  Y_pred = np.zeros_like(Y_train)
   T = len(Theta_L)
 
-  # Create Modified copy of the Theta_L for Regularization
-  # Coefficient for bias unit set to 0 so that bias unit is not regularized
+  # Create variable to hold error caused by each Theta_L[t] in layer a_N[t+1]
+  Theta_Gradient_L = [np.zeros_like(theta) for theta in Theta_L]
+
+  # Backprop Error; One list element for each layer
+  delta_N = [] # [0 for theta in Theta_L]
+
+  # Forward Pass
+  z_N, a_N, Y_pred = nn_predict(X_train, Theta_L)
+
+  # Get Error for Output Layer (linear unit)
+  delta = Y_pred - Y_train
+  if delta.ndim == 1:
+    delta.resize(1, len(delta))
+  delta_N.append( delta )
+
+  # Get Error for Hidden Layers working backwards (stop before layer 0; no error in input layer)
+  for t in range(T-1,0,-1):
+    delta = delta.dot(Theta_L[t][:,1:]) * sigmoidGradient(z_N[t])
+    delta_N.append( delta )
+  # Reverse the list so that delta_N[t] corresponds to Theta_N[t] numbers delta[t] is delta that Theta[t] causes on a_N[t+1]
+  delta_N.reverse()
+
+  # Calculate Gradient from delta and activation
+  # t is the Theta from layer t to layer t+1
+  for t in range(T):
+    Theta_Gradient_L[t] = delta_N[t].T.dot(a_N[t])
+
+  # Create modified copy of the Theta_L for Regularization
+  # Coefficient for theta values from bias unit set to 0 so that bias unit is not regularized
   regTheta = [np.zeros_like(theta) for theta in Theta_L]
   for t, theta in enumerate(Theta_L):
     regTheta[t][:,1:] = theta[:,1:]
-
-  # Create variable to accumulate error caused by each Theta_L term in layer a_N[n+1]
-  Theta_Gradient_L = [np.zeros_like(theta) for theta in Theta_L]
-
-  for n, x in enumerate(X_train):
-    #print 'X_train[n] VALUE:',n, ' ', x
-
-    # Forward Pass
-    z_N, a_N, Y_pred[n] = nn_predict(x, Theta_L)
-
-    # Backprop Error
-    delta_N = []
-    
-    # Error for Output layer is predicted value - Y training value
-    delta = Y_pred[n] - Y_train[n]
-    if delta.ndim == 1:
-      delta.resize( 1, len(delta) )
-    delta_N.append( delta )
-    # Loop backwards through hidden Layers (no error in input layer)
-    for t in range(T-1,0,-1):
-      delta = delta.dot(Theta_L[t][:,1:]) * sigmoidGradient(z_N[t])
-      delta_N.append( delta )
-    # Reverse the list so that deltas correspond to theta numbers delta[t] is delta that Theta[t] causes on a_N[t+1]
-    delta_N.reverse()
-
-    # Accumulate the error terms (no error in input layer)
-    # t is the Theta from layer t to layer t+1
-    for t in range(T):
-      Theta_Gradient_L[t] = Theta_Gradient_L[t] + delta_N[t].T.dot(a_N[t])
 
   # Average Error + regularization penalty  
   for t in range(T):
@@ -211,7 +208,7 @@ def fit(X_train, Y_train, Theta_L=[], lmda=0, epochs=2):
   if not Theta_L:
     hidden_units = max(2, len(Y[0]), len(X_train[0]))
     Theta_L = initialize_theta([hidden_units])
-  
+
   J_list = [0] * epochs
   for i in range(epochs):
     # Back prop to get Y_pred and Theta gradient
@@ -253,11 +250,11 @@ def XOR_test(hidden_unit_length_list = [], epochs=2500):
   X_train[3,:] = 0.
 
   Y_train = np.array([1.,1.,0.,0.]).reshape(4,1) 	# Single Class
-  Y_train = np.zeros((4,2))  						# Two classes
-  Y_train[0,0] = 1.
-  Y_train[1,0] = 1.
-  Y_train[2,1] = 1.
-  Y_train[3,1] = 1.
+  #Y_train = np.zeros((4,2))  						# Two classes
+  #Y_train[0,0] = 1.
+  #Y_train[1,0] = 1.
+  #Y_train[2,1] = 1.
+  #Y_train[3,1] = 1.
 
   print 'Training Data: X & Y'
   print X_train
@@ -277,7 +274,7 @@ def XOR_test(hidden_unit_length_list = [], epochs=2500):
   print 'Predicted Y:'
   print np.round(Y_pred,3)
 
-  return X_train, Y_train, Y_pred, J_list
+  return X_train, Y_train, Y_pred, J_list, Theta_L
 
 
 if __name__ == '__main__':
@@ -285,7 +282,6 @@ if __name__ == '__main__':
   Run XOR_test
   Plot Error terms to see learning progress of NN
   """
-  X_train, Y_train, Y_pred, J_list =  XOR_test([2], 2500)
-
+  X_train, Y_train, Y_pred, J_list, Theta_L =  XOR_test([2], 5000)
 
 

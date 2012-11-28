@@ -126,48 +126,42 @@ class py_nn():
       predicted Y values
       Theta_Gradient_L
     """
-
-
     n_observations = len(X)
-    pred_Y = np.zeros_like(Y)
     T = len(self.Theta_L)
-
-    # Create Modified copy of the Theta_L for Regularization
-    # Coefficient for bias unit set to 0 so that bias unit is not regularized
-    regTheta = [np.zeros_like(theta) for theta in self.Theta_L]
-    for t, theta in enumerate(self.Theta_L):
-      regTheta[t][:,1:] = theta[:,1:]
 
     # Create variable to accumulate error caused by each Theta_L term in layer a_N[n+1]
     Theta_Gradient_L = [np.zeros_like(theta) for theta in self.Theta_L]
 
-    for n, x in enumerate(X):
-    
-      #print 'X[n] VALUE:',n, ' ', x
+    # Backprop Error; One list element for each layer
+    delta_N = []
+
+    # Forward Pass
+    pred_Y = self.nn_predict(X)
       
-      # Forward Pass
-      pred_Y[n] = self.nn_predict(x)
-      
-      # Backprop Error
-      delta_N = []
-    
-      # Error for Output layer is predicted value - Y training value
-      delta = pred_Y[n] - Y[n]
-      if delta.ndim == 1:
-        delta.resize( 1, len(delta) )
+    # Get Error for Output Layer (linear unit)
+    delta = pred_Y - Y
+    if delta.ndim == 1:
+      delta.resize( 1, len(delta) )
+    delta_N.append( delta )
+
+    # Get Error for Hidden Layers working backwards (stop before layer 0; no error in input layer)
+    for t in range(T-1,0,-1):
+      delta = delta.dot(self.Theta_L[t][:,1:]) * self.sigmoidGradient(self.z_N[t])
       delta_N.append( delta )
-      # Loop backwards through hidden Layers (no error in input layer)
-      for t in range(T-1,0,-1):
-        delta = delta.dot(self.Theta_L[t][:,1:]) * self.sigmoidGradient(self.z_N[t])
-        delta_N.append( delta )
-      # Reverse the list so that deltas correspond to theta numbers delta[t] is delta that Theta[t] causes on a_N[t+1]
-      delta_N.reverse()
+    # Reverse the list so that delta_N[t] corresponds to Theta_N[t] numbers delta[t] is delta that Theta[t] causes on a_N[t+1]
+    delta_N.reverse()
     
-      # Accumulate the error terms (no error in input layer)
-      # t is the Theta from layer t to layer t+1
-      for t in range(T):
-        Theta_Gradient_L[t] = Theta_Gradient_L[t] + delta_N[t].T.dot(self.a_N[t])
+    # Calculate Gradient from delta and activation
+    # t is the Theta from layer t to layer t+1
+    for t in range(T):
+      Theta_Gradient_L[t] = delta_N[t].T.dot(self.a_N[t])
   
+    # Create modified copy of the Theta_L for Regularization
+    # Coefficient for theta values from bias unit set to 0 so that bias unit is not regularized
+    regTheta = [np.zeros_like(theta) for theta in self.Theta_L]
+    for t, theta in enumerate(self.Theta_L):
+      regTheta[t][:,1:] = theta[:,1:]
+
     # Average Error + regularization penalty  
     for t in range(T):
       Theta_Gradient_L[t] = Theta_Gradient_L[t] * (1.0/n_observations) + (self.lmda * regTheta[t])
