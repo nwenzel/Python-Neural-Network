@@ -107,12 +107,7 @@ class py_nn():
     n_observations = len(Y)
 
     # Cost Function
-    if Y.shape[1] == 1:
-      # Y[i] is scalar
-      J = (-1.0/n_observations)*(Y.T.dot(np.log(pred_Y)) + (1-Y.T).dot(np.log(1-pred_Y))).sum()
-    else:
-      # Y[i] is vector
-      J = (-1.0/n_observations)*(np.diag(Y.T.dot(np.log(pred_Y))) + np.diag((1-Y.T).dot(np.log(1-pred_Y)))).sum()
+    J = (-1.0/n_observations)*(Y * np.log(Y_pred) + ((1-Y) * np.log(1-Y_pred))).sum()
 
     return J
   

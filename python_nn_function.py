@@ -85,12 +85,7 @@ def nn_cost(Y, Y_pred):
   n_observations = len(Y)
 
   # Cost Function
-  if Y.shape[1] == 1:
-    # Y[i] is scalar
-    J = (-1.0/n_observations)*(Y.T.dot(np.log(Y_pred)) + (1-Y.T).dot(np.log(1-Y_pred))).sum()
-  else:
-    # Y[i] is vector
-    J = (-1.0/n_observations)*(np.diag(Y.T.dot(np.log(Y_pred))) + np.diag((1-Y.T).dot(np.log(1-Y_pred)))).sum()
+  J = (-1.0/n_observations)*(Y * np.log(Y_pred) + ((1-Y) * np.log(1-Y_pred))).sum()
 
   return J
   
@@ -231,7 +226,6 @@ def fit(X_train, Y_train, Theta_L=[], lmda=0, epochs=2):
   print 'i:',i,'  - J:',J_list[i]
     
   return Theta_L, J_list
-
 
 
 def XOR_test(hidden_unit_length_list = [], epochs=2500):
