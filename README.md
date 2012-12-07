@@ -1,6 +1,10 @@
 # Code for Basic Python Neural Network #
 
-This repository contains all the Python code for a basic Neural Network that uses back propagation to learn feature weights for each layer in the network architecture. The code will allow you to create networks with any number of hidden layers each with any number of units. Input layer and Output layer are determined by training data.
+This repository contains all the Python code for a basic Neural Network that uses back propagation to learn feature weights for each layer in the network architecture. In the "function" version of the code, the code now supports a dynamic learning rate and momentum.
+
+The dynamic learning rate is an accelerator/decelerator that slightly increases the learning rate as the weight updates achieve error and significantly reduces the learning rate and reverses 1/2 the last update when an update increases the error.
+
+The code will allow you to create networks with any number of hidden layers each with any number of units. Input layer and Output layer are determined by training data.
 
 The code works with any number of hidden layers and any number of units in each layer, so go crazy trying out different combinations. BUT... it has not been tested on large data sets, large numbers of hidden layers, or large numbers of units in the hidden layer. So... go crazy at your own risk.
 
