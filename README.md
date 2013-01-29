@@ -1,3 +1,8 @@
+### UPDATE 01/28/2013
+# Momentum and dynamic learning rates to be launched soon. The code is written, working the bugs out now.
+
+
+
 # Code for Basic Python Neural Network #
 
 This repository contains all the Python code for a basic Neural Network that uses back propagation to learn feature weights for each layer in the network architecture. In the "function" version of the code, the code now supports a dynamic learning rate and momentum.
