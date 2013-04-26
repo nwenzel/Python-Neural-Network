@@ -1,5 +1,5 @@
-### UPDATE 01/28/2013
-# Momentum and dynamic learning rates to be launched soon. The code is written, working the bugs out now.
+### UPDATE 04/26/2012
+## Momentum and dynamic learning rates just launched. Working out some of the bugs out now. ##
 
 
 
