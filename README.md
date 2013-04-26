@@ -42,13 +42,16 @@ from python_nn_class import nn_py
 
 nn = nn_py()
 
-nn.XOR_test([2], 2500)
+target_test, Y_pred, J_list, J_test_list, learning_rates = nn.XOR_test(hidden_unit_length_list = [2], epochs=2500, learning_rate=0.5, momentum_rate=0.1, learning_acceleration=1.05, learning_backup=0.5)
 
 
 The iPython console should then show the training data (all 4 records), an explanation of the architecture, Theta shapes and values, the cost of the last iteration of the back prop function, and a new set of input data with predicted outputs.
 
+nn.iris_test() and nn.digits_test() work the same as XOR_test.
+
 Additionally, a basic plot of the results of the cost function should also appear.
 
+The class implementation is pretty poor in it's current state. The class method inputs should really be set elsewhere as needed.
 
 ### For python_nn_function... ###
 
@@ -67,14 +70,19 @@ The iPython console should then show the training data (all 4 records), an expla
 
 The plot() function will show a basic plot of the results of the cost function.
 
+Or, call the test functions directly with:
+
+target_test, Y_pred, J_list, J_test_list, learning_rates, Theta_L = XOR_test(hidden_unit_length_list = [2], epochs=2500, learning_rate=0.5, momentum_rate=0.1, learning_acceleration=1.05, learning_backup=0.5)
+
+iris_test() and digits_test() work the same as XOR_test().
 
 From there, go in and mess with the code.
 
 ### Requirements ###
 Python 2.7 (may work elsewhere but probably not 3.x)
 
+iPython
 Numpy
-
 Matplotlib is recommended but not required
 
 ## Author ##

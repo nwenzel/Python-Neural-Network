@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-#
 
 import numpy as np
+from sklearn.datasets import load_iris, load_digits
 
 def sigmoid(z):
   """sigmoid is a basic sigmoid function returning values from 0-1"""
@@ -70,12 +71,15 @@ def print_theta(Theta_L):
     print theta
   print
 
+
 def nn_cost(Y, Y_pred):
   """
   nn_cost implements cost function
     
   y is n_observations by n_classes (n_classes = 1 for n_classes <=2)
   Y_pred is predicted y values and must be same shape as y
+  
+  Returns J - list of cost values
   """
   if Y.shape != Y_pred.shape:
     if Y.shape[0] != Y_pred.shape:
@@ -108,11 +112,10 @@ def nn_predict(X, Theta_L):
   T = len(Theta_L)
     
   a_N = []		# List of activations including bias unit for non-output layers
-  #z_N = []		# List of inputs for non-input layers
 
   # Input Layer inputs
   a_N.append( X )
-  #z_N.append( np.zeros((1,1)) ) # add filler Z layer to align lists for a, z, and Theta
+  
   # Loop through each Theta_List theta
   # t is Theta for calculating layer t+1 from layer t
   for t, theta in enumerate(Theta_L):
@@ -122,8 +125,6 @@ def nn_predict(X, Theta_L):
     a_N[t] = np.append(np.ones((a_N[t].shape[0],1)), a_N[t], 1)
       
     # Calculate and Append new z and a arrays to z_N and a_N lists
-    #z_N.append( a_N[t].dot(theta.T) )
-    #a_N.append( sigmoid(z_N[t+1]) )
     z = a_N[t].dot(theta.T)
     a_N.append( sigmoid(z) )
   return a_N, a_N[T]
@@ -155,7 +156,6 @@ def back_prop(a_N, Y_train, Theta_L, lmda):
 
   # Get Error for Hidden Layers working backwards (stop before layer 0; no error in input layer)
   for t in range(T-1,0,-1):
-    #delta = delta.dot(Theta_L[t][:,1:]) * sigmoidGradient(z_N[t])
     delta = delta.dot(Theta_L[t][:,1:]) * ( a_N[t][:,1:] * (1 - a_N[t][:,1:]) )
     delta_N.append( delta )
   # Reverse the list so that delta_N[t] is delta that Theta[t] causes on a_N[t+1]
@@ -191,12 +191,6 @@ def fit(X_train, Y_train, Theta_L=[], lmda=1e-5, epochs=2, learning_rate = 1.0, 
     Theta_L - list of theta terms as np.arrays where each theta has dimensions n_units[l+1] by n_units[l]+1
     lmda - regularization term
     epochs -  integer of number of times to update Theta_L
-    batch_size - 
-      0 = full batch, 
-      0-0.5 = percent to use per batch, 
-      0.5-1.0 = percent to use per batch, only 1 batch per epoch, 
-      1 = online (single observation updates), 
-      >=1 = number of observations per batch
     X_test - np.array of training data with dimension n_observations by n_features
     Y_test - np.array of training classes with dimension n_observations by n_classes
   Returns
@@ -209,22 +203,22 @@ def fit(X_train, Y_train, Theta_L=[], lmda=1e-5, epochs=2, learning_rate = 1.0, 
   
   # If no Theta provided, use a 3 layer architecture with hidden_layer units = 2 or y classes or x features
   if not Theta_L:
-    hidden_units = max(2, len(Y[0]), len(X_train[0]))
+    hidden_units = max(2, len(Y_train[0]), len(X_train[0]))
     Theta_L = initialize_theta([hidden_units])
 
   # Initial Learning Rate
   learning_rates = []
   learning_rates.append( learning_rate )
 
-  # Initial Momentum Terms
-  Theta_Momentum = [np.zeros_like(theta) for theta in Theta_L]
+  # Initial Weight Change Terms
+  weight_change_L = [np.zeros_like(theta) for theta in Theta_L]
   
   # List of results of cost functions
   J_list = [0] * epochs
   J_test_list = [0] * epochs
 
   # Initial Forward Pass
-  a_N, Y_pred = nn_predict(X_train, Theta_L)
+  a_N_train, Y_pred = nn_predict(X_train, Theta_L)
   # Initial Cost
   J_list[0] = nn_cost(Y_train, Y_pred)
 
@@ -232,33 +226,36 @@ def fit(X_train, Y_train, Theta_L=[], lmda=1e-5, epochs=2, learning_rate = 1.0, 
   if Y_test is not None:
     a_N_test, Y_pred_test = nn_predict(X_test, Theta_L)
     J_test_list[0] = nn_cost(Y_test, Y_pred_test)
-
+  print 'learning rate: %s' % learning_rate
+  print 'momentum rate: %s' % momentum_rate
+  print 'learning acceleration: %s' % learning_acceleration
+  print 'learning backup: %s' % learning_backup
+  
   for i in range(1,epochs):
 
     # Back Prop to get Theta Gradients
-    Theta_grad = back_prop(a_N, Y_train, Theta_L, lmda)
+    Theta_grad = back_prop(a_N_train, Y_train, Theta_L, lmda)
 
     # Update Theta with Momentum
     for l, theta_g in enumerate(Theta_grad):
-      Theta_L[l] = Theta_L[l] - learning_rate * theta_g + Theta_Momentum[l]
-      Theta_Momentum[l] = momentum_rate * (learning_rate * theta_g + Theta_Momentum[l])
-
+      weight_change_L[l] = learning_rate * theta_g + (weight_change_L[l] * momentum_rate)
+      Theta_L[l] = Theta_L[l] - weight_change_L[l]
 
     # Update Units
-    a_N, Y_pred_new = nn_predict(X_train, Theta_L)
+    a_N_train, Y_pred_new = nn_predict(X_train, Theta_L)
 
     # Check to see if Cost decreased
     J_new = nn_cost(Y_train, Y_pred_new)
 
     if J_new > J_list[i-1]:
-      # Halve learning rate
+      # Reduce learning rate
       learning_rate = learning_rate * learning_backup
-      # Reverse half of adjustment (add back new learning_rate * Theta_grad); Leave momentum in place
+      # Reverse part of adjustment (add back new learning_rate * Theta_grad); Leave momentum in place
       Theta_L = [t + (learning_rate * tg) for t, tg in zip(Theta_L, Theta_grad)]
-      # Halve momentum as an approximate fix
-      Theta_Momentum = [m/2 for m in Theta_Momentum]
+      # Reduce Prior Weight Change as an approximate fix to Momentum
+      weight_change_L = [m * learning_backup for m in weight_change_L]
 
-      a_N, Y_pred_new = nn_predict(X_train, Theta_L)
+      a_N_train, Y_pred_new = nn_predict(X_train, Theta_L)
       J_new = nn_cost(Y_train, Y_pred_new)
     else:
       learning_rate = np.min((10,learning_rate * learning_acceleration))
@@ -334,49 +331,52 @@ def train_test_split(data_array, target_array, split=.8):
   return train_data, test_data, train_target, test_target
 
 
-def iris_test(hidden_unit_length_list = [], epochs=2500, learning_rate=0.5, momentum_rate=0.1, learning_acceleration=1.05, learning_backup=0.5):
-  from sklearn.datasets import load_iris  
-  data_set = load_iris()
-  
-  return nn_test(data_set, hidden_unit_length_list, epochs, learning_rate, momentum_rate, learning_acceleration, learning_backup)
-
-def digits_test(hidden_unit_length_list = [], epochs=2500, learning_rate=0.5, momentum_rate=0.1, learning_acceleration=1.05, learning_backup=0.5):
-  from sklearn.datasets import load_digits
-  data_set = load_digits()
-  
-  return nn_test(data_set, hidden_unit_length_list, epochs, learning_rate, momentum_rate, learning_acceleration, learning_backup)
-
-def nn_test(data_set, hidden_unit_length_list, epochs, learning_rate, momentum_rate, learning_acceleration, learning_backup):
-
-  data = data_set.data
-  target = translate_to_binary_array(data_set.target)
-  #feature_names = data_set.feature_names
-  target_names = list(data_set.target_names) # Convert to list to match to feature names
-  
-  # Split into train, test sets
-  data_train, data_test, target_train, target_test = train_test_split(data, target, .75)
+def nn_test(data_train, target_train, hidden_unit_length_list, epochs, learning_rate, momentum_rate, learning_acceleration, learning_backup, data_test=None, target_test=None):
   
   # Initialize Theta based on selected architecture
   Theta_L = initialize_theta(data_train.shape[1], target_train.shape[1], hidden_unit_length_list)
   
   # Fit
-  Theta_L, J_list, learning_rates, J_test_list = fit(data_train, target_train, Theta_L, 1e-5, epochs, learning_rate=.5, momentum_rate=.1, learning_acceleration=1.05, learning_backup=0.5, X_test=data_test, Y_test=target_test)
+  Theta_L, J_list, learning_rates, J_test_list = fit(data_train, target_train, Theta_L, 1e-5, epochs, learning_rate, momentum_rate, learning_acceleration, learning_backup, data_test, target_test)
   
   # Predict
   a_N, Y_pred = nn_predict(data_test, Theta_L)
   print 'Given X:'
   print data_test[:5]
   print 'Actual Y, Predicted Y:'
-  for p in zip(target_test, np.round(Y_pred,3)):
+  for p in zip(target_test[:10], np.round(Y_pred[:10],3)):
     print p
   print
   print 'CE on Test Set'
   print nn_cost(target_test , Y_pred)
 
-  return data_train, target_train, target_test, Y_pred, J_list, J_test_list, Theta_L, learning_rates
+  return target_test, Y_pred, J_list, J_test_list, learning_rates, Theta_L
   
 
-def XOR_test(hidden_unit_length_list = [], epochs=2500):
+def iris_test(hidden_unit_length_list = [], epochs=2500, learning_rate=0.5, momentum_rate=0.1, learning_acceleration=1.05, learning_backup=0.5):
+  data_set = load_iris()
+
+  data = data_set.data
+  target = translate_to_binary_array(data_set.target)
+  
+  # Split into train, test sets
+  data_train, data_test, target_train, target_test = train_test_split(data, target, .75)
+  
+  return nn_test(data_train, target_train, hidden_unit_length_list, epochs, learning_rate, momentum_rate, learning_acceleration, learning_backup, data_test, target_test)
+
+def digits_test(hidden_unit_length_list = [], epochs=2500, learning_rate=0.5, momentum_rate=0.1, learning_acceleration=1.05, learning_backup=0.5):
+  data_set = load_digits()
+
+  data = data_set.data
+  target = translate_to_binary_array(data_set.target)
+  
+  # Split into train, test sets
+  data_train, data_test, target_train, target_test = train_test_split(data, target, .75)
+  
+  return nn_test(data_train, target_train, hidden_unit_length_list, epochs, learning_rate, momentum_rate, learning_acceleration, learning_backup, data_test, target_test)
+
+
+def XOR_test(hidden_unit_length_list = [], epochs=2500, learning_rate=0.5, momentum_rate=0.1, learning_acceleration=1.05, learning_backup=0.5):
   """
   XOR_test is a simple test of the nn printing the predicted value to std out
   Trains on a sample XOR data set
@@ -385,39 +385,23 @@ def XOR_test(hidden_unit_length_list = [], epochs=2500):
   """
   
   # Set Data for XOR Test  
-  X_train = np.zeros((4,2))
-  X_train[0,0] = 1.
-  X_train[1,1] = 1.
-  X_train[2,:] = 1.
-  X_train[3,:] = 0.
+  data_train = np.zeros((4,2))
+  data_train[0,0] = 1.
+  data_train[1,1] = 1.
+  data_train[2,:] = 1.
+  data_train[3,:] = 0.
 
-  Y_train = np.array([1.,1.,0.,0.]).reshape(4,1) 	# Single Class
+  target_train = np.array([1.,1.,0.,0.]).reshape(4,1) 	# Single Class
 
   # Test X and Y
-  X_test = np.array([[1,0],[0,1],[1,1],[0,0]])
-  Y_test = np.array([[1],[1],[0],[0]])
+  data_test = np.array([[1,0],[0,1],[1,1],[0,0]])
+  target_test = np.array([[1],[1],[0],[0]])
 
   print 'Training Data: X & Y'
-  print X_train
-  print Y_train
+  print data_train
+  print target_train
 
-  # Initialize Theta based on selected architecture
-  Theta_L = initialize_theta(X_train.shape[1], Y_train.shape[1], hidden_unit_length_list)
-  
-  # Fit
-  Theta_L, J_list, learning_rates, J_test_list = fit(X_train, Y_train, Theta_L, 1e-5, epochs, learning_rate=0.5, momentum_rate=0.1, learning_acceleration=1.05, learning_backup=0.5, X_test=X_test, Y_test=Y_test)
-  
-  # Predict
-  print 'Given X:'
-  print X_test
-  a_N, Y_pred = nn_predict(X_test, Theta_L)
-  print 'Predicted Y:'
-  print np.round(Y_pred,3)
-  print
-  print 'Cost'
-  print nn_cost(Y_test , Y_pred)
-
-  return X_train, Y_train, Y_test, Y_pred, J_list, J_test_list, Theta_L, learning_rates
+  return nn_test(data_train, target_train, hidden_unit_length_list, epochs, learning_rate, momentum_rate, learning_acceleration, learning_backup, data_test, target_test)
 
 
 if __name__ == '__main__':
@@ -425,6 +409,6 @@ if __name__ == '__main__':
   Run XOR_test
   Plot Error terms to see learning progress of NN
   """
-  X_train, Y_train, Y_test, Y_pred, J_list, J_test_list, Theta_L, learning_rates =  XOR_test([2], 300)
+  target_test, Y_pred, J_list, J_test_list, Theta_L, learning_rates =  XOR_test([2], 300)
 
 

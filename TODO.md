@@ -3,4 +3,4 @@ Improve process to get data
 Create Source_Data folder
 Move XOR test data to source data folder
 Mini-batch updating
-Update the "class" version with the updates made to the "function" version
+Improve class implementation to set the method parameters from the object variables, not the function call
